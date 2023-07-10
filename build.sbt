@@ -1,7 +1,8 @@
-import Dependencies._
+import Dependencies.*
 
 ThisBuild / scalaVersion := "2.13.11"
-ThisBuild / libraryDependencies := Seq(scalatest)
+
+ThisBuild / libraryDependencies := Seq(scalacheck, scalatest)
 ThisBuild / scalacOptions := Seq(
   "-deprecation",
   "-encoding",
