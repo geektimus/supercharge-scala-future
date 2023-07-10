@@ -1,12 +1,11 @@
 package exercises.action
 
 import scala.annotation.tailrec
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 package object imperative {
 
-  def greeting(): Unit =
-    println("Hello")
+  def greeting(): Unit = println("Hello")
 
   // 1. Implement `retry`, a function which evaluates a block of code until either:
   // * It succeeds.
@@ -25,8 +24,14 @@ package object imperative {
   // Note: `action: => A` is a by-name parameter (see the Evaluation lesson).
   // Note: `maxAttempt` must be greater than 0, if not you should throw an exception.
   // Note: Tests are in the `exercises.action.imperative.ImperativeActionTest`
-  def retry[A](maxAttempt: Int)(action: => A): A =
-    ???
+  @tailrec
+  def retry[A](maxAttempt: Int)(action: => A): A = {
+    require(maxAttempt > 0, "maxAttempt must be greater than zero (0)")
+    Try(action) match {
+      case Success(v) => v
+      case Failure(e) => if (maxAttempt == 1) throw e else retry(maxAttempt - 1)(action)
+    }
+  }
 
   // 2. Refactor `readSubscribeToMailingListRetry` in `UserCreationExercises` using `retry`.
 
@@ -40,7 +45,12 @@ package object imperative {
   // Prints "An error occurred: Boom" and then rethrow the "Boom" exception.
   // Note: You need to write tests for `onError` yourself in `exercises.action.imperative.ImperativeActionTest`
   def onError[A](action: => A, cleanup: Throwable => Any): A =
-    ???
+    Try(action) match {
+      case Success(v) => v
+      case Failure(e) =>
+        cleanup(e)
+        throw e
+    }
 
   // 4. Refactor `readSubscribeToMailingListRetry` using `onError` in `UserCreationExercises`.
 
