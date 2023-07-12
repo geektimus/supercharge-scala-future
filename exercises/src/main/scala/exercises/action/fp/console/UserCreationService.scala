@@ -5,14 +5,14 @@ import java.time.format.DateTimeFormatter
 
 import exercises.action.fp.IO
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 // Run the App using the green arrow next to object (if using IntelliJ)
 // or run `sbt` in the terminal to open it in shell mode then type:
 // exercises/runMain exercises.actions.fp.UserCreationServiceApp
 object UserCreationServiceApp extends App {
   val console = Console.system
-  val clock   = Clock.system
+  val clock = Clock.system
   val service = new UserCreationService(console, clock)
 
   service.readUser.unsafeRun()
@@ -31,21 +31,18 @@ class UserCreationService(console: Console, clock: Clock) {
   // Then, we'll refactor `readName` with `andThen`.
   // Note: You can find tests in `exercises.action.fp.console.UserCreationServiceTest`
   val readName: IO[String] =
-    IO {
-      console.writeLine("What's your name?").unsafeRun()
-      console.readLine.unsafeRun()
-    }
+    console.writeLine("What's your name?").andThen(console.readLine)
 
   // 2. Refactor `readDateOfBirth` so that the code combines the three internal `IO`
   // instead of executing each `IO` one after another using `unsafeRun`.
   // For example, try to use `andThen`.
   // If it doesn't work investigate the methods `map` and `flatMap` on the `IO` trait.
   val readDateOfBirth: IO[LocalDate] =
-    IO {
-      console.writeLine("What's your date of birth? [dd-mm-yyyy]").unsafeRun()
-      val line = console.readLine.unsafeRun()
-      parseDateOfBirth(line).unsafeRun()
-    }
+    console
+      .writeLine("What's your date of birth? [dd-mm-yyyy]")
+      .andThen(console.readLine)
+      .map(x => parseDateOfBirth(x))
+      .unsafeRun()
 
   // 3. Refactor `readSubscribeToMailingList` and `readUser` using the same techniques as `readDateOfBirth`.
   val readSubscribeToMailingList: IO[Boolean] =
@@ -57,11 +54,11 @@ class UserCreationService(console: Console, clock: Clock) {
 
   val readUser: IO[User] =
     IO {
-      val name        = readName.unsafeRun()
+      val name = readName.unsafeRun()
       val dateOfBirth = readDateOfBirth.unsafeRun()
-      val subscribed  = readSubscribeToMailingList.unsafeRun()
-      val now         = clock.now.unsafeRun()
-      val user        = User(name, dateOfBirth, subscribed, now)
+      val subscribed = readSubscribeToMailingList.unsafeRun()
+      val now = clock.now.unsafeRun()
+      val user = User(name, dateOfBirth, subscribed, now)
       console.writeLine(s"User is $user").unsafeRun()
       user
     }
@@ -164,17 +161,15 @@ class UserCreationService(console: Console, clock: Clock) {
 }
 
 object UserCreationService {
+
   val dateOfBirthFormatter: DateTimeFormatter =
     DateTimeFormatter.ofPattern("dd-MM-uuuu")
 
-  def formatDateOfBirth(date: LocalDate): String =
-    dateOfBirthFormatter.format(date)
+  def formatDateOfBirth(date: LocalDate): String = dateOfBirthFormatter.format(date)
 
-  def parseDateOfBirth(line: String): IO[LocalDate] =
-    IO(LocalDate.parse(line, dateOfBirthFormatter))
+  def parseDateOfBirth(line: String): IO[LocalDate] = IO(LocalDate.parse(line, dateOfBirthFormatter))
 
-  def formatYesNo(bool: Boolean): String =
-    if (bool) "Y" else "N"
+  def formatYesNo(bool: Boolean): String = if (bool) "Y" else "N"
 
   def parseLineToBoolean(line: String): IO[Boolean] =
     IO {
@@ -184,4 +179,5 @@ object UserCreationService {
         case _   => throw new IllegalArgumentException("Invalid input, expected Y/N")
       }
     }
+
 }
