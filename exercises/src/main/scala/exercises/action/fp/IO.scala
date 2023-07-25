@@ -44,8 +44,7 @@ trait IO[A] {
   //       Use `flatMap` if `callBack` is not an FP function.
   def map[Next](callBack: A => Next): IO[Next] =
     IO {
-      val result = unsafeRun()
-      callBack(result)
+      callBack(unsafeRun())
     }
 
   // Runs the current action (`this`), if it succeeds passes the result to `callback` and
@@ -57,7 +56,11 @@ trait IO[A] {
   // action.unsafeRun()
   // Fetches the user with id 1234 from the database and send them an email using the email
   // address found in the database.
-  def flatMap[Next](callback: A => IO[Next]): IO[Next] = callback(unsafeRun())
+  def flatMap[Next](callback: A => IO[Next]): IO[Next] =
+    IO {
+      val result = unsafeRun()
+      callback(result).unsafeRun()
+    }
 
   // Runs the current action, if it fails it executes `cleanup` and rethrows the original error.
   // If the current action is a success, it will return the result.
