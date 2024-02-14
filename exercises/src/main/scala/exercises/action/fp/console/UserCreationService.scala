@@ -19,6 +19,7 @@ object UserCreationServiceApp extends App {
 }
 
 class UserCreationService(console: Console, clock: Clock) {
+  import console.{ readLine, writeLine }
   import UserCreationService._
   import console.{ readLine, writeLine }
 
@@ -30,9 +31,12 @@ class UserCreationService(console: Console, clock: Clock) {
   // Let's capture the pattern of doing two actions, one after the other, using
   // the method `andThen` on the `IO` trait.
   // Then, we'll refactor `readName` with `andThen`.
-  // Note: You can find tests in `exercises.action.fp.console.UserCreationServiceTest`
+  // Note: You can find tests in `exercises.action.fp.UserCreationServiceTest`
   val readName: IO[String] =
-    writeLine("What's your name?").andThen(readLine)
+    for {
+      _    <- writeLine("What's your name?")
+      name <- readLine
+    } yield name
 
   // 2. Refactor `readDateOfBirth` so that the code combines the three internal `IO`
   // instead of executing each `IO` one after another using `unsafeRun`.
@@ -40,18 +44,18 @@ class UserCreationService(console: Console, clock: Clock) {
   // If it doesn't work investigate the methods `map` and `flatMap` on the `IO` trait.
   val readDateOfBirth: IO[LocalDate] =
     for {
-      _           <- writeLine("What's your date of birth? [dd-mm-yyyy]")
-      line        <- readLine
-      dateOfBirth <- parseDateOfBirth(line)
-    } yield dateOfBirth
+      _    <- writeLine("What's your date of birth? [dd-mm-yyyy]")
+      line <- readLine
+      date <- parseDateOfBirth(line)
+    } yield date
 
   // 3. Refactor `readSubscribeToMailingList` and `readUser` using the same techniques as `readDateOfBirth`.
   val readSubscribeToMailingList: IO[Boolean] =
     for {
-      _      <- writeLine("Would you like to subscribe to our mailing list? [Y/N]")
-      line   <- readLine
-      answer <- parseLineToBoolean(line)
-    } yield answer
+      _     <- writeLine("Would you like to subscribe to our mailing list? [Y/N]")
+      line  <- readLine
+      yesNo <- parseLineToBoolean(line)
+    } yield yesNo
 
   val readUser: IO[User] =
     for {
@@ -171,7 +175,7 @@ object UserCreationService {
 
   def formatYesNo(bool: Boolean): String = if (bool) "Y" else "N"
 
-  def parseLineToBoolean(line: String): IO[Boolean] =
+  private def parseLineToBoolean(line: String): IO[Boolean] =
     IO {
       line match {
         case "Y" => true
