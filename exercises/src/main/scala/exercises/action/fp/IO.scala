@@ -99,16 +99,14 @@ trait IO[A] {
   // Note: `retry` is a no-operation when `maxAttempt` is equal to 1.
   def retry(maxAttempt: Int): IO[A] =
     IO {
-      maxAttempt match {
-        case n if n <= 0 => throw new IllegalArgumentException("Max attempts must be greater than zero")
-        case n if n == 1 => unsafeRun()
-        case n if n > 1 =>
-          Try(unsafeRun()) match {
-            case Success(value)     => value
-            case Failure(exception) => retry(maxAttempt - 1).unsafeRun()
-          }
-      }
+      require(maxAttempt > 0, "maxAttempt must be greater than zero")
 
+      Try(unsafeRun()) match {
+        case Success(value) => value
+        case Failure(exception) =>
+          if (maxAttempt == 1) throw exception
+          retry(maxAttempt - 1).unsafeRun()
+      }
     }
 
   // Checks if the current IO is a failure or a success.
@@ -118,7 +116,10 @@ trait IO[A] {
   // returns either:
   // 1. Success(User(1234, "Bob", ...)) if `action` was successful or
   // 2. Failure(new Exception("User 1234 not found")) if `action` throws an exception
-  def attempt: IO[Try[A]] = ???
+  def attempt: IO[Try[A]] =
+    IO {
+      Try(unsafeRun())
+    }
 
   // If the current IO is a success, do nothing.
   // If the current IO is a failure, execute `callback` and keep its result.
